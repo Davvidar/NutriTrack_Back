@@ -26,7 +26,6 @@ function calcularObjetivosNutricionales({ peso, altura, edad, sexo, actividad, o
     const grasas = Math.round((0.25 * calorias) / 9);
   
     return { calorias, proteinas, carbohidratos, grasas };
-  }
-  
+  }  
   module.exports = { calcularObjetivosNutricionales };
   

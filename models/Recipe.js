@@ -8,12 +8,14 @@ const ingredientSchema = new mongoose.Schema({
 const recipeSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
   ingredientes: [ingredientSchema],
-  pesoFinal: { type: Number, required: true }, // peso final del plato preparado
+  pesoFinal: { type: Number, required: true },
   calorias: { type: Number, required: true },
   proteinas: { type: Number, required: true },
   carbohidratos: { type: Number, required: true },
   grasas: { type: Number, required: true },
-  // Si es receta creada por un usuario, se guarda el id del creador; de lo contrario, puede ser null (global)
+  azucares: { type: Number },           
+  grasasSaturadas: { type: Number },    
+  fibra: { type: Number },              
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }
 });
 

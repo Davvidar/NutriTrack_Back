@@ -11,11 +11,24 @@ const userSchema = new mongoose.Schema({
   edad: { type: Number, required: true },
   objetivo: { type: String, enum: ["perder peso", "mantenerse", "ganar músculo"], required: true },
   actividad: { type: String, enum: ["sedentario", "ligero", "moderado", "activo", "muy activo"], required: true },
+  objetivosNutricionales: {
+    calorias: { type: Number },
+    proteinas: { type: Number },
+    carbohidratos: { type: Number },
+    grasas: { type: Number }
+  },
+  
   favoritos: [{
     tipo: { type: String, enum: ["product", "recipe"], required: true },
     refId: { type: mongoose.Schema.Types.ObjectId, required: true, refPath: "favoritos.tipo" }
   }],
-  isActive: { type: Boolean, default: false }
+  isActive: { type: Boolean, default: false },
+  rol: {
+    type: String,
+    enum: ["user", "admin"],
+    default: "user"
+  }
+  
 });
 
 module.exports = mongoose.model("User", userSchema);

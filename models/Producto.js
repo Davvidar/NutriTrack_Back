@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const productSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
   marca: { type: String },
+  codigoBarras: { type: String, unique: true, sparse: true },
+
   // Información nutricional por cada 100g del producto
   calorias: { type: Number, required: true },
   proteinas: { type: Number, required: true },

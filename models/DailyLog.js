@@ -9,6 +9,7 @@ const dailyLogSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   fecha: { type: Date, default: Date.now },
   pesoDelDia: { type: Number }, // peso registrado ese día
+  
   comidas: {
     // Las claves pueden tener nombres por defecto pero el usuario podrá personalizarlos en la interfaz
     desayuno: [mealItemSchema],
@@ -18,6 +19,7 @@ const dailyLogSchema = new mongoose.Schema({
     cena: [mealItemSchema],
     recena: [mealItemSchema]
   }
+
 });
 
 module.exports = mongoose.model("DailyLog", dailyLogSchema);

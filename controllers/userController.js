@@ -2,8 +2,9 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
+const { calcularObjetivosNutricionales } = require("../utils/calculonutricional")
 
-// Función de registro (ya existente)
+// Registro de usuario con cálculo automático
 const registerUser = async (req, res) => {
   try {
     const { nombre, apellido, correo, password, peso, altura, sexo, edad, objetivo, actividad } = req.body;
@@ -12,6 +13,15 @@ const registerUser = async (req, res) => {
     if (existingUser) return res.status(400).json({ message: "El correo ya está en uso" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    const objetivosNutricionales = calcularObjetivosNutricionales({
+      peso,
+      altura,
+      edad,
+      sexo,
+      actividad,
+      objetivo
+    });
 
     const newUser = new User({
       nombre,
@@ -24,14 +34,13 @@ const registerUser = async (req, res) => {
       edad,
       objetivo,
       actividad,
+      objetivosNutricionales
     });
 
     await newUser.save();
 
-    // Generar token de activación (expira en 1 día)
     const activationToken = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
-    // Configurar nodemailer (ejemplo con Gmail)
     const transporter = nodemailer.createTransport({
       service: "Gmail",
       auth: {
@@ -40,7 +49,6 @@ const registerUser = async (req, res) => {
       }
     });
 
-    // Construir link de activación (asegúrate de definir BASE_URL en tu .env)
     const activationLink = `${process.env.BASE_URL}/api/users/activate/${activationToken}`;
 
     const mailOptions = {
@@ -54,11 +62,7 @@ const registerUser = async (req, res) => {
     };
 
     transporter.sendMail(mailOptions, (err, info) => {
-      if (err) {
-        console.error("Error al enviar email de activación:", err);
-      } else {
-        console.log("Email de activación enviado:", info.response);
-      }
+      if (err) console.error("Error al enviar email de activación:", err);
     });
 
     res.status(201).json({ message: "Usuario registrado. Revisa tu correo para activar la cuenta." });
@@ -68,7 +72,7 @@ const registerUser = async (req, res) => {
   }
 };
 
-// Función de login (ya existente)
+// Login
 const loginUser = async (req, res) => {
   try {
     const { correo, password } = req.body;
@@ -79,16 +83,15 @@ const loginUser = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Contraseña incorrecta" });
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign({ id: user._id, rol: user.rol }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
     res.json({ token, user });
-
   } catch (error) {
     res.status(500).json({ message: "Error en el inicio de sesión", error });
   }
 };
 
-// Obtener perfil (ya existente)
+// Obtener perfil
 const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select("-password");
@@ -98,39 +101,72 @@ const getProfile = async (req, res) => {
   }
 };
 
-// Activar cuenta (ya existente)
+// Actualizar perfil (peso, altura, objetivo, y macros manuales)
+const updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+    const {
+      peso,
+      altura,
+      edad,
+      sexo,
+      actividad,
+      objetivo,
+      objetivosNutricionales // opcional si se editan manualmente
+    } = req.body;
+
+    if (peso !== undefined) user.peso = peso;
+    if (altura !== undefined) user.altura = altura;
+    if (edad !== undefined) user.edad = edad;
+    if (sexo) user.sexo = sexo;
+    if (actividad) user.actividad = actividad;
+    if (objetivo) user.objetivo = objetivo;
+
+    if (objetivosNutricionales) {
+      user.objetivosNutricionales = objetivosNutricionales;
+    } else {
+      // recalcula automáticamente si no se pasa manualmente
+      user.objetivosNutricionales = calcularObjetivosNutricionales({
+        peso: user.peso,
+        altura: user.altura,
+        edad: user.edad,
+        sexo: user.sexo,
+        actividad: user.actividad,
+        objetivo: user.objetivo
+      });
+    }
+
+    await user.save();
+    res.json({ message: "Perfil actualizado", user: { ...user.toObject(), password: undefined } });
+  } catch (error) {
+    res.status(500).json({ message: "Error al actualizar perfil", error });
+  }
+};
+
+// Activar cuenta
 const activateAccount = async (req, res) => {
   try {
     const { token } = req.params;
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
-  
-    await User.findByIdAndUpdate(userId, { isActive: true });
-  
+    await User.findByIdAndUpdate(decoded.userId, { isActive: true });
     res.json({ message: "Cuenta activada exitosamente" });
   } catch (error) {
     res.status(400).json({ message: "Token inválido o expirado" });
   }
 };
 
-// ------------------------------
-// NUEVA FUNCIONALIDAD: Restablecimiento de contraseña
-// ------------------------------
-
-// Endpoint para solicitar el restablecimiento de contraseña
+// Solicitar restablecimiento de contraseña
 const resetPasswordRequest = async (req, res) => {
   const { correo } = req.body;
   try {
     const user = await User.findOne({ correo });
-    if (!user) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    }
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
-    // Generar token de restablecimiento que expira en 15 minutos
     const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "15m" });
     const resetLink = `${process.env.BASE_URL}/api/users/reset-password/${resetToken}`;
 
-    // Enviar email con el link de recuperación
     const transporter = nodemailer.createTransport({
       service: "Gmail",
       auth: {
@@ -151,38 +187,35 @@ const resetPasswordRequest = async (req, res) => {
 
     res.json({ message: "Se ha enviado un email con instrucciones para restablecer la contraseña." });
   } catch (error) {
-    console.error("Error en resetPasswordRequest:", error);
     res.status(500).json({ message: "Error interno al solicitar restablecimiento de contraseña." });
   }
 };
 
-// Endpoint para restablecer la contraseña usando el token
+// Confirmar restablecimiento
 const resetPassword = async (req, res) => {
   const { token } = req.params;
   const { newPassword } = req.body;
   try {
-    // Verificar el token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
-    // Encriptar la nueva contraseña
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();
 
     res.json({ message: "Contraseña actualizada correctamente." });
   } catch (error) {
-    console.error("Error en resetPassword:", error);
     res.status(400).json({ message: "Token inválido o expirado." });
   }
 };
 
-module.exports = { 
-  registerUser, 
-  loginUser, 
-  getProfile, 
-  activateAccount, 
-  resetPasswordRequest, 
-  resetPassword 
+module.exports = {
+  registerUser,
+  loginUser,
+  getProfile,
+  updateProfile,
+  activateAccount,
+  resetPasswordRequest,
+  resetPassword
 };

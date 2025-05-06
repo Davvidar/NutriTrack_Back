@@ -1,15 +1,32 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
-const authMiddleware = (req, res, next) => {
-  const token = req.header("Authorization");
-  if (!token) return res.status(401).json({ message: "Acceso denegado" });
+const authMiddleware = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "No autorizado, token ausente" });
+  }
+
+  const token = authHeader.split(" ")[1];
 
   try {
-    const verified = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = verified;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await User.findById(decoded.id).select("_id rol");
+
+    if (!user) {
+      return res.status(401).json({ message: "Usuario no encontrado" });
+    }
+
+    req.user = {
+      userId: user._id.toString(),
+      rol: user.rol || "user" // por si no tiene campo 'rol', se asume user
+    };
+
     next();
   } catch (error) {
-    res.status(400).json({ message: "Token inválido" });
+    return res.status(401).json({ message: "Token inválido o expirado", error });
   }
 };
 

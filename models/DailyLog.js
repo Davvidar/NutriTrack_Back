@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 
 const mealItemSchema = new mongoose.Schema({
-  productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+  recipeId: { type: mongoose.Schema.Types.ObjectId, ref: "Recipe" }, // opcional, si es una receta
   cantidad: { type: Number, required: true } // cantidad en gramos
 });
 

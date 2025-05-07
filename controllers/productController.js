@@ -191,13 +191,17 @@ const searchProducts = async (req, res) => {
     const userId = req.user.userId;
     const { query = "", mis, favoritos } = req.query;
 
+    console.log('Parámetros de búsqueda recibidos:', { query, mis, favoritos, userId });
+
     const normalized = query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // sin tildes
     const regex = new RegExp(normalized, "i");
 
-    // Condiciones base: globales o del usuario
+    // Condiciones base: Si mis=true, SOLO productos del usuario (no globales)
     const baseFilter = mis === "true"
-      ? { userId }
-      : { $or: [ { userId: null }, { userId } ] };
+      ? { userId } // Productos propios solamente
+      : { $or: [ { userId: null }, { userId } ] }; // Productos globales + propios
+
+    console.log('Filtro base aplicado:', JSON.stringify(baseFilter));
 
     const nameOrBrandFilter = {
       $or: [
@@ -211,16 +215,24 @@ const searchProducts = async (req, res) => {
       ...nameOrBrandFilter
     });
 
+    console.log(`Encontrados ${products.length} productos con el filtro aplicado`);
+
     if (favoritos === "true") {
       const user = await User.findById(userId);
-      const favoritosSet = new Set(user.favoritos.map(fav => fav.toString()));
-      products = products.filter(p => favoritosSet.has(p._id.toString()));
+      if (user && user.favoritos && user.favoritos.length > 0) {
+        const favoritosSet = new Set(user.favoritos.map(fav => fav.toString()));
+        products = products.filter(p => favoritosSet.has(p._id.toString()));
+        console.log(`Filtrado por favoritos: ${products.length} productos`);
+      } else {
+        console.log('No hay favoritos definidos para el usuario');
+        products = []; // Si no hay favoritos, devolvemos array vacío
+      }
     }
 
     res.json(products);
   } catch (error) {
-    console.error("Error en búsqueda de productos:", error);
-    res.status(500).json({ message: "Error en la búsqueda", error: error.toString() });
+    console.error('Error en searchProducts:', error);
+    res.status(500).json({ message: "Error en la búsqueda", error });
   }
 };
 

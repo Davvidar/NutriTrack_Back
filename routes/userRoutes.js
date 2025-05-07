@@ -25,7 +25,7 @@ const router = express.Router();
 // Registro y login
 router.post("/register", userRegisterValidator, validateFields, registerUser);
 router.post("/login", userLoginValidator, validateFields, loginUser);
-router.post("/logout")
+router.post("/logout", loguoutValidator, validateFields, logoutUser);
 
 // Perfil
 router.get("/profile", authMiddleware, getProfile);

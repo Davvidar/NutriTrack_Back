@@ -6,7 +6,8 @@ const {
   updateProfile,
   activateAccount,
   resetPasswordRequest,
-  resetPassword
+  resetPassword,
+  logoutUser
 } = require("../controllers/userController");
 
 const authMiddleware = require("../middlewares/authMiddleware");
@@ -15,7 +16,8 @@ const {
   userRegisterValidator,
   userLoginValidator,
   passwordResetRequestValidator,
-  passwordResetValidator
+  passwordResetValidator,
+  loguoutValidator
 } = require("../middlewares/userValidator");
 
 const router = express.Router();
@@ -23,10 +25,12 @@ const router = express.Router();
 // Registro y login
 router.post("/register", userRegisterValidator, validateFields, registerUser);
 router.post("/login", userLoginValidator, validateFields, loginUser);
+router.post("/logout")
 
 // Perfil
 router.get("/profile", authMiddleware, getProfile);
-router.put("/profile", authMiddleware, updateProfile); // ✅ NUEVO ENDPOINT
+router.put("/profile", authMiddleware, updateProfile); 
+
 
 // Activación
 router.get("/activate/:token", activateAccount);

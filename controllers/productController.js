@@ -219,7 +219,8 @@ const searchProducts = async (req, res) => {
 
     res.json(products);
   } catch (error) {
-    res.status(500).json({ message: "Error en la búsqueda", error });
+    console.error("Error en búsqueda de productos:", error);
+    res.status(500).json({ message: "Error en la búsqueda", error: error.toString() });
   }
 };
 

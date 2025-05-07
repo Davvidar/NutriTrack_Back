@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const ingredientSchema = new mongoose.Schema({
   productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+  marca:{type:mongoose.Schema.Types.ObjectId,ref:"Product",required:false},
   cantidad: { type: Number, required: true } // cantidad en gramos
 });
 

@@ -5,7 +5,7 @@ const {
   getRecipeById,
   updateRecipe,
   deleteRecipe
-} = require("../controllers/recipeController");
+} = require("../controllers/recipesController");
 
 const authMiddleware = require("../middlewares/authMiddleware");
 const recipeValidator = require("../middlewares/recipeValidator");

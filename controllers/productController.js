@@ -156,7 +156,7 @@ const deleteProduct = async (req, res) => {
       return res.status(403).json({ message: "No tienes permiso para eliminar este producto" });
     }
 
-    await product.remove();
+    await product.deleteOne();
     res.json({ message: "Producto eliminado" });
   } catch (error) {
     res.status(500).json({ message: "Error eliminando producto", error });

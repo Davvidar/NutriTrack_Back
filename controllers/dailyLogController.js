@@ -101,63 +101,99 @@ const getDailyLogByDate = async (req, res) => {
 };
 
 // Obtener resumen nutricional del día comparado con los objetivos
+// controllers/dailyLogController.js - Versión optimizada de getResumenNutricional
 const getResumenNutricional = async (req, res) => {
   try {
     const userId = req.user.userId;
     const fechaParam = req.query.fecha;
     const fecha = fechaParam ? new Date(fechaParam) : new Date();
 
-    const inicio = new Date(fecha.setHours(0, 0, 0, 0));
-    const fin = new Date(fecha.setHours(23, 59, 59, 999));
+    const inicio = new Date(fecha);
+    inicio.setHours(0, 0, 0, 0);
+    const fin = new Date(fecha);
+    fin.setHours(23, 59, 59, 999);
 
-    const dailyLog = await DailyLog.findOne({ userId, fecha: { $gte: inicio, $lte: fin } });
+    // Obtener el registro diario y el usuario en paralelo
+    const [dailyLog, user] = await Promise.all([
+      DailyLog.findOne({ userId, fecha: { $gte: inicio, $lte: fin } }),
+      User.findById(userId, 'objetivosNutricionales')
+    ]);
 
     if (!dailyLog) {
-      return res.json({ message: "Sin registro en esta fecha", consumido: {}, diferencia: {} });
+      return res.json({
+        message: "Sin registro en esta fecha",
+        consumido: { calorias: 0, proteinas: 0, carbohidratos: 0, grasas: 0 },
+        objetivo: user.objetivosNutricionales,
+        diferencia: {
+          calorias: user.objetivosNutricionales.calorias,
+          proteinas: user.objetivosNutricionales.proteinas,
+          carbohidratos: user.objetivosNutricionales.carbohidratos,
+          grasas: user.objetivosNutricionales.grasas
+        }
+      });
     }
 
+    // Aplanar todos los items de comidas
     const items = Object.values(dailyLog.comidas).flat();
+    
+    // Separar IDs de productos y recetas
+    const productIds = items.filter(i => i.productId).map(i => ({
+      id: i.productId,
+      cantidad: i.cantidad
+    }));
+    
+    const recipeIds = items.filter(i => i.recipeId).map(i => ({
+      id: i.recipeId,
+      cantidad: i.cantidad
+    }));
 
-    let consumido = { calorias: 0, proteinas: 0, carbohidratos: 0, grasas: 0 };
-    const productMap = new Map();
-    const recipeMap = new Map();
+    // Obtener productos y recetas en paralelo
+    const [products, recipes] = await Promise.all([
+      productIds.length > 0 ? 
+        Product.find({ _id: { $in: productIds.map(p => p.id) } }) : 
+        [],
+      recipeIds.length > 0 ? 
+        Recipe.find({ _id: { $in: recipeIds.map(r => r.id) } }) : 
+        []
+    ]);
 
-    items.forEach(item => {
-      if (item.productId) {
-        const key = item.productId.toString();
-        productMap.set(key, (productMap.get(key) || 0) + item.cantidad);
-      } else if (item.recipeId) {
-        const key = item.recipeId.toString();
-        recipeMap.set(key, (recipeMap.get(key) || 0) + item.cantidad);
+    // Crear mapas para acceso rápido
+    const productMap = new Map(products.map(p => [p._id.toString(), p]));
+    const recipeMap = new Map(recipes.map(r => [r._id.toString(), r]));
+
+    // Calcular nutrientes en un solo bucle
+    const consumido = { calorias: 0, proteinas: 0, carbohidratos: 0, grasas: 0 };
+
+    // Procesar productos
+    productIds.forEach(({ id, cantidad }) => {
+      const product = productMap.get(id.toString());
+      if (product) {
+        const factor = cantidad / 100;
+        consumido.calorias += product.calorias * factor;
+        consumido.proteinas += product.proteinas * factor;
+        consumido.carbohidratos += product.carbohidratos * factor;
+        consumido.grasas += product.grasas * factor;
       }
     });
 
-    const products = await Product.find({ _id: { $in: Array.from(productMap.keys()) } });
-    products.forEach(p => {
-      const gramos = productMap.get(p._id.toString()) / 100;
-      consumido.calorias += p.calorias * gramos;
-      consumido.proteinas += p.proteinas * gramos;
-      consumido.carbohidratos += p.carbohidratos * gramos;
-      consumido.grasas += p.grasas * gramos;
+    // Procesar recetas
+    recipeIds.forEach(({ id, cantidad }) => {
+      const recipe = recipeMap.get(id.toString());
+      if (recipe) {
+        const factor = cantidad / recipe.pesoFinal;
+        consumido.calorias += recipe.calorias * factor;
+        consumido.proteinas += recipe.proteinas * factor;
+        consumido.carbohidratos += recipe.carbohidratos * factor;
+        consumido.grasas += recipe.grasas * factor;
+      }
     });
 
-    const recipes = await Recipe.find({ _id: { $in: Array.from(recipeMap.keys()) } });
-    recipes.forEach(r => {
-      const gramosConsumidos = recipeMap.get(r._id.toString());
-      const proporcion = gramosConsumidos / r.pesoFinal;
-      consumido.calorias += r.calorias * proporcion;
-      consumido.proteinas += r.proteinas * proporcion;
-      consumido.carbohidratos += r.carbohidratos * proporcion;
-      consumido.grasas += r.grasas * proporcion;
-    });
-
+    // Redondear todos los valores
     Object.keys(consumido).forEach(k => {
       consumido[k] = Math.round(consumido[k]);
     });
 
-    const user = await User.findById(userId);
     const objetivo = user.objetivosNutricionales;
-
     const diferencia = {
       calorias: objetivo.calorias - consumido.calorias,
       proteinas: objetivo.proteinas - consumido.proteinas,
@@ -166,9 +202,9 @@ const getResumenNutricional = async (req, res) => {
     };
 
     res.json({ consumido, objetivo, diferencia });
-
   } catch (error) {
-    res.status(500).json({ message: "Error al calcular resumen nutricional", error });
+    console.error("Error en getResumenNutricional:", error);
+    res.status(500).json({ message: "Error al calcular resumen nutricional", error: error.message });
   }
 };
 

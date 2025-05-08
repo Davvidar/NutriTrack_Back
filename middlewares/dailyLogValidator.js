@@ -23,8 +23,9 @@ const mealItemValidator = (items, { path }) => {
 const dailyLogValidator = [
   body("pesoDelDia")
     .optional()
-    .isFloat({ gt: 0 })
+    .isFloat({ gt: 0 || null })
     .withMessage("El peso debe ser un número positivo"),
+    
 
   // Valida que comidas sea un objeto con 6 arrays válidos (opcionalmente puedes reducir la cantidad si permites comidas personalizadas)
   body("comidas.desayuno").optional().custom(mealItemValidator),

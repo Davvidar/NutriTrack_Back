@@ -17,9 +17,33 @@ const generarComidasVacias = () => ({
 const createDailyLog = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { fecha, pesoDelDia, comidas } = req.body;
-
-    const logExistente = await DailyLog.findOne({ userId, fecha });
+    let { fecha, pesoDelDia, comidas } = req.body;
+    
+    // Normalizar la fecha a UTC si está presente
+    if (fecha) {
+      let fechaObj = new Date(fecha);
+      const year = fechaObj.getFullYear();
+      const month = fechaObj.getMonth();
+      const day = fechaObj.getDate();
+      fecha = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+    } else {
+      // Si no hay fecha, usar hoy a medianoche UTC
+      const now = new Date();
+      fecha = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0));
+    }
+    
+    console.log('Backend - Creando registro para fecha:', fecha);
+    
+    // Buscar si ya existe un registro para esa fecha exacta
+    const inicio = new Date(fecha);
+    const fin = new Date(fecha);
+    fin.setHours(23, 59, 59, 999);
+    
+    const logExistente = await DailyLog.findOne({ 
+      userId, 
+      fecha: { $gte: inicio, $lte: fin } 
+    });
+    
     if (logExistente) {
       return res.status(400).json({ message: "Ya existe un registro para esta fecha" });
     }
@@ -80,15 +104,32 @@ const getDailyLogByDate = async (req, res) => {
   try {
     const userId = req.user.userId;
     const fechaParam = req.query.fecha;
-    const fecha = fechaParam ? new Date(fechaParam) : new Date();
+    
+    // Crear la fecha base a partir del parámetro o usar la fecha actual
+    let fecha = fechaParam ? new Date(fechaParam) : new Date();
+    
+    // Normalizar la fecha a medianoche UTC para asegurar consistencia
+    // Primero obtenemos año, mes y día
+    const year = fecha.getFullYear();
+    const month = fecha.getMonth();
+    const day = fecha.getDate();
+    
+    // Crear nuevas fechas para inicio y fin evitando modificar la original
+    const inicio = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+    const fin = new Date(Date.UTC(year, month, day, 23, 59, 59, 999));
+    
+    console.log('Backend - Fecha parámetro:', fechaParam);
+    console.log('Backend - Fecha normalizada inicio:', inicio);
+    console.log('Backend - Fecha normalizada fin:', fin);
 
-    const inicio = new Date(fecha.setHours(0, 0, 0, 0));
-    const fin = new Date(fecha.setHours(23, 59, 59, 999));
-
-    const dailyLog = await DailyLog.findOne({ userId, fecha: { $gte: inicio, $lte: fin } });
+    const dailyLog = await DailyLog.findOne({ 
+      userId, 
+      fecha: { $gte: inicio, $lte: fin } 
+    });
 
     if (dailyLog) return res.json(dailyLog);
 
+    // Si no existe un registro, devolver estructura vacía
     res.json({
       userId,
       fecha: inicio,
@@ -106,12 +147,22 @@ const getResumenNutricional = async (req, res) => {
   try {
     const userId = req.user.userId;
     const fechaParam = req.query.fecha;
-    const fecha = fechaParam ? new Date(fechaParam) : new Date();
-
-    const inicio = new Date(fecha);
-    inicio.setHours(0, 0, 0, 0);
-    const fin = new Date(fecha);
-    fin.setHours(23, 59, 59, 999);
+    
+    // Crear la fecha base a partir del parámetro o usar la fecha actual
+    let fecha = fechaParam ? new Date(fechaParam) : new Date();
+    
+    // Normalizar la fecha a medianoche UTC para asegurar consistencia
+    const year = fecha.getFullYear();
+    const month = fecha.getMonth();
+    const day = fecha.getDate();
+    
+    // Crear nuevas fechas para inicio y fin
+    const inicio = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+    const fin = new Date(Date.UTC(year, month, day, 23, 59, 59, 999));
+    
+    console.log('Backend - Resumen - Fecha parámetro:', fechaParam);
+    console.log('Backend - Resumen - Fecha normalizada inicio:', inicio);
+    console.log('Backend - Resumen - Fecha normalizada fin:', fin);
 
     // Obtener el registro diario y el usuario en paralelo
     const [dailyLog, user] = await Promise.all([

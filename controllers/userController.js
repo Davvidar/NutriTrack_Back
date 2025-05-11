@@ -211,10 +211,6 @@ const resetPassword = async (req, res) => {
 };
 const logoutUser = async (req, res) => {
   try {
-    const logout = () => {
-      localStorage.removeItem("token");
-      window.location.href = "/login"; // Redirigir al usuario a la página de inicio de sesión
-    };
     res.json({ message: "Sesión cerrada correctamente." });
   } catch (error) {
     res.status(500).json({ message: "Error al cerrar sesión", error });

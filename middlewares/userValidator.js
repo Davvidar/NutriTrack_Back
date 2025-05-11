@@ -26,8 +26,8 @@ const passwordResetValidator = [
   body("newPassword").isLength({ min: 6 }).withMessage("La nueva contraseña debe tener al menos 6 caracteres")
 ];
 const loguoutValidator = [
-  body("correo").isEmail().withMessage("Correo electrónico no válido"),
-  body("password").notEmpty().withMessage("La contraseña es obligatoria")
+
+  
 ];
 module.exports = {
   userRegisterValidator,

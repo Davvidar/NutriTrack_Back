@@ -45,7 +45,8 @@ const getRecipes = async (req, res) => {
     const userId = req.user.userId;
     const recipes = await Recipe.find({
       $or: [{ userId: null }, { userId }]
-    });
+    }).populate('ingredientes.productId', 'nombre marca');
+    
     res.json(recipes);
   } catch (error) {
     res.status(500).json({ message: "Error obteniendo recetas", error });
@@ -55,7 +56,9 @@ const getRecipes = async (req, res) => {
 // Obtener receta por ID
 const getRecipeById = async (req, res) => {
   try {
-    const recipe = await Recipe.findById(req.params.id);
+    const recipe = await Recipe.findById(req.params.id)
+      .populate('ingredientes.productId', 'nombre marca calorias proteinas carbohidratos grasas');
+    
     if (!recipe) return res.status(404).json({ message: "Receta no encontrada" });
 
     if (recipe.userId && recipe.userId.toString() !== req.user.userId) {

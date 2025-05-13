@@ -9,12 +9,13 @@ const mealItemValidator = (items, { path }) => {
   for (const item of items) {
     if (
       typeof item !== "object" ||
-      !item.productId ||
-      !isValidObjectId(item.productId) ||
+      (!item.productId && !item.recipeId) || // Debe tener productId O recipeId
+      (item.productId && !isValidObjectId(item.productId)) ||
+      (item.recipeId && !isValidObjectId(item.recipeId)) ||
       typeof item.cantidad !== "number" ||
       item.cantidad <= 0
     ) {
-      throw new Error(`Comida '${path}' contiene un producto inválido`);
+      throw new Error(`Comida '${path}' contiene un item inválido`);
     }
   }
   return true;

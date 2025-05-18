@@ -4,7 +4,8 @@ const {
   getRecipes,
   getRecipeById,
   updateRecipe,
-  deleteRecipe
+  deleteRecipe,
+  searchRecipes
 } = require("../controllers/recipesController");
 
 const authMiddleware = require("../middlewares/authMiddleware");

@@ -7,7 +7,8 @@ const {
   activateAccount,
   resetPasswordRequest,
   resetPassword,
-  logoutUser
+  logoutUser,
+  updateFavorites
 } = require("../controllers/userController");
 
 const authMiddleware = require("../middlewares/authMiddleware");
@@ -30,6 +31,8 @@ router.post("/logout", logoutUser);
 // Perfil
 router.get("/profile", authMiddleware, getProfile);
 router.put("/profile", authMiddleware, updateProfile); 
+
+router.put("/favorites", authMiddleware, updateFavorites);
 
 
 // Activación

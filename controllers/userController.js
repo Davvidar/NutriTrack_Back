@@ -216,6 +216,55 @@ const logoutUser = async (req, res) => {
     res.status(500).json({ message: "Error al cerrar sesión", error });
   }
 };
+
+const updateFavorites = async (req, res) => {
+  try {
+    const { favoritos } = req.body;
+    const userId = req.user.userId;
+    
+    if (!Array.isArray(favoritos)) {
+      return res.status(400).json({ 
+        message: "Formato incorrecto", 
+        details: "Se esperaba un array de favoritos" 
+      });
+    }
+    
+    // Validar estructura de cada favorito
+    const isValidFavoritos = favoritos.every(fav => 
+      fav.tipo && ['product', 'recipe'].includes(fav.tipo) && 
+      fav.refId
+    );
+    
+    if (!isValidFavoritos && favoritos.length > 0) {
+      return res.status(400).json({ 
+        message: "Formato de favoritos inválido", 
+        details: "Cada favorito debe tener un campo 'tipo' (product o recipe) y un campo 'refId'"
+      });
+    }
+    
+    // Actualizar solo el campo favoritos
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: { favoritos } },
+      { new: true, select: "-password" }
+    );
+    
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+    
+    res.json({ 
+      message: "Favoritos actualizados", 
+      favoritos: user.favoritos 
+    });
+    
+  } catch (error) {
+    res.status(500).json({ 
+      message: "Error al actualizar favoritos", 
+      error: error.message 
+    });
+  }
+};
 module.exports = {
   registerUser,
   loginUser,
@@ -224,5 +273,6 @@ module.exports = {
   activateAccount,
   resetPasswordRequest,
   resetPassword,
-  logoutUser
+  logoutUser,
+  updateFavorites
 };

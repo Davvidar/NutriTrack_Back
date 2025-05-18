@@ -293,7 +293,7 @@ const cargarProductosMasivos = async (req, res) => {
       fibra: p.fibra || null,
       sal: p.sal || null,
       porcion: p.porcion || null,
-      userId // asignar al usuario que los carga
+      userId 
     }));
 
     const insertados = await Product.insertMany(nuevos);

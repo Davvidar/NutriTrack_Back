@@ -1,4 +1,5 @@
 const Recipe = require("../models/Recipe");
+const User = require("../models/User");
 
 // Crear receta
 const createRecipe = async (req, res) => {
@@ -43,15 +44,40 @@ const createRecipe = async (req, res) => {
 const getRecipes = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const recipes = await Recipe.find({
+    const { favoritos } = req.query;
+
+    // Buscar todas las recetas (globales + propias del usuario)
+    let recipes = await Recipe.find({
       $or: [{ userId: null }, { userId }]
     }).populate('ingredientes.productId', 'nombre marca');
+    
+    // Si se solicita filtrar por favoritos
+    if (favoritos === "true") {
+      const user = await User.findById(userId);
+      if (user && user.favoritos && user.favoritos.length > 0) {
+        // Crear un conjunto de IDs de recetas favoritas
+        // Filtrando solo los favoritos de tipo 'recipe'
+        const favoritosSet = new Set(
+          user.favoritos
+            .filter(fav => fav.tipo === 'recipe')
+            .map(fav => fav.refId.toString())
+        );
+        
+        // Filtrar recetas que están en el conjunto de favoritos
+        recipes = recipes.filter(r => favoritosSet.has(r._id.toString()));
+        console.log(`Filtrado por favoritos: ${recipes.length} recetas`);
+      } else {
+        console.log('No hay favoritos definidos para el usuario');
+        recipes = []; // Si no hay favoritos, devolvemos array vacío
+      }
+    }
     
     res.json(recipes);
   } catch (error) {
     res.status(500).json({ message: "Error obteniendo recetas", error });
   }
 };
+
 
 // Obtener receta por ID
 const getRecipeById = async (req, res) => {
@@ -128,11 +154,48 @@ const deleteRecipe = async (req, res) => {
     res.status(500).json({ message: "Error eliminando receta", error });
   }
 };
+const searchRecipes = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { query = "", favoritos } = req.query;
+
+    const normalized = query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // sin tildes
+    const regex = new RegExp(normalized, "i");
+
+    // Buscar recetas que coincidan con la consulta
+    let recipes = await Recipe.find({
+      $or: [{ userId: null }, { userId }],
+      nombre: { $regex: regex }
+    });
+
+    // Si se solicita filtrar por favoritos
+    if (favoritos === "true") {
+      const user = await User.findById(userId);
+      if (user && user.favoritos && user.favoritos.length > 0) {
+        // Filtrar favoritos de tipo receta
+        const favoritosSet = new Set(
+          user.favoritos
+            .filter(fav => fav.tipo === 'recipe')
+            .map(fav => fav.refId.toString())
+        );
+        
+        recipes = recipes.filter(r => favoritosSet.has(r._id.toString()));
+      } else {
+        recipes = []; // Si no hay favoritos, devolver array vacío
+      }
+    }
+
+    res.json(recipes);
+  } catch (error) {
+    res.status(500).json({ message: "Error en la búsqueda de recetas", error });
+  }
+};
 
 module.exports = {
   createRecipe,
   getRecipes,
   getRecipeById,
   updateRecipe,
-  deleteRecipe
+  deleteRecipe,
+  searchRecipes
 };

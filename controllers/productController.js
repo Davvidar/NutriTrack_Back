@@ -220,7 +220,15 @@ const searchProducts = async (req, res) => {
     if (favoritos === "true") {
       const user = await User.findById(userId);
       if (user && user.favoritos && user.favoritos.length > 0) {
-        const favoritosSet = new Set(user.favoritos.map(fav => fav.toString()));
+        // Crear un conjunto de IDs de productos favoritos
+        // Filtrando solo los favoritos de tipo 'product'
+        const favoritosSet = new Set(
+          user.favoritos
+            .filter(fav => fav.tipo === 'product')
+            .map(fav => fav.refId.toString())
+        );
+        
+        // Filtrar productos que están en el conjunto de favoritos
         products = products.filter(p => favoritosSet.has(p._id.toString()));
         console.log(`Filtrado por favoritos: ${products.length} productos`);
       } else {

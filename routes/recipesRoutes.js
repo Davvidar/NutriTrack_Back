@@ -13,6 +13,9 @@ const validateFields = require("../middlewares/validateFields");
 
 const router = express.Router();
 
+router.get("/search", authMiddleware, searchRecipes);
+
+
 // Rutas protegidas con validación
 router.post("/", authMiddleware, recipeValidator, validateFields, createRecipe);
 router.put("/:id", authMiddleware, recipeValidator, validateFields, updateRecipe);

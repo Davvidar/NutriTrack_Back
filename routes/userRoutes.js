@@ -48,7 +48,11 @@ router.get("/activate/:token", activateAccount);
 router.post("/reset-password-request", passwordResetRequestValidator, validateFields, resetPasswordRequest);
 router.post("/reset-password/:token", passwordResetValidator, validateFields, resetPassword);
 
-// Cambiar contraseña y eliminar cuenta
+// eliminar cuenta
+router.post("/delete-account", authMiddleware, deleteAccount);
+router.post("/change-password", authMiddleware, changePassword);
+
+// Cambiar contraseña
 router.get("/reset-password/:token", (req, res) => {
   try {
     const { token } = req.params;
@@ -64,7 +68,7 @@ router.get("/reset-password/:token", (req, res) => {
   }
 });
 
-// Procesamiento del restablecimiento desde el formulario EJS
+// Restablecimiento desde el formulario EJS
 router.post("/reset-password/:token", async (req, res) => {
   const { token } = req.params;
   const { newPassword, confirmPassword } = req.body;

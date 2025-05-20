@@ -225,7 +225,7 @@ const resetPassword = async (req, res) => {
     user.password = hashedPassword;
     await user.save();
 
-    res.json({ message: "Contraseña actualizada correctamente." });
+   res.render('auth/reset-success');
   } catch (error) {
     res.status(400).json({ message: "Token inválido o expirado." });
   }

@@ -157,39 +157,8 @@ const activateAccount = async (req, res) => {
   }
 };
 
-// Solicitar restablecimiento de contraseña
-const resetPasswordRequest = async (req, res) => {
-  const { correo } = req.body;
-  try {
-    const user = await User.findOne({ correo });
-    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
-    const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "15m" });
-    const resetLink = `${process.env.BASE_URL}/api/users/reset-password/${resetToken}`;
 
-    const transporter = nodemailer.createTransport({
-      service: "Gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: correo,
-      subject: "Recuperación de contraseña - NutriTrack",
-      html: `<p>Hola ${user.nombre},</p>
-             <p>Para restablecer tu contraseña, haz clic en el siguiente enlace:</p>
-             <a href="${resetLink}">Restablecer contraseña</a>
-             <p>El enlace expirará en 15 minutos.</p>`
-    });
-
-    res.json({ message: "Se ha enviado un email con instrucciones para restablecer la contraseña." });
-  } catch (error) {
-    res.status(500).json({ message: "Error interno al solicitar restablecimiento de contraseña." });
-  }
-};
 
 const changePassword = async (req, res) => {
   try {
@@ -270,7 +239,61 @@ const logoutUser = async (req, res) => {
 };
 
 
+const resetPasswordRequest = async (req, res) => {
+  const { correo } = req.body;
+  try {
+    const user = await User.findOne({ correo });
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
+    const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "15m" });
+    
+    // Apunta a la ruta EJS en el backend
+    const resetLink = `${process.env.BASE_URL}/api/users/reset-password/${resetToken}`;
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: correo,
+      subject: "Recuperación de contraseña - NutriTrack",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://i.ibb.co/85JwWGj/logo.png" alt="NutriTrack Logo" style="width: 80px; height: auto;">
+            <h1 style="color: #6dbd3c; margin-top: 10px;">nutritrack</h1>
+          </div>
+          
+          <p style="margin-bottom: 15px;">Hola ${user.nombre},</p>
+          
+          <p style="margin-bottom: 20px;">Has solicitado restablecer tu contraseña. Haz clic en el siguiente botón para crear una nueva contraseña:</p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetLink}" style="background-color: #6dbd3c; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">Restablecer Contraseña</a>
+          </div>
+          
+          <p style="margin-bottom: 15px;">Si no has solicitado este cambio, puedes ignorar este correo.</p>
+          
+          <p style="margin-bottom: 15px;">El enlace expirará en 15 minutos por motivos de seguridad.</p>
+          
+          <p style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; font-size: 12px; color: #888;">
+            Este es un correo automático, por favor no respondas a este mensaje.
+          </p>
+        </div>
+      `
+    });
+
+    res.json({ message: "Se ha enviado un email con instrucciones para restablecer la contraseña." });
+  } catch (error) {
+    console.error("Error en reset-password-request:", error);
+    res.status(500).json({ message: "Error interno al solicitar restablecimiento de contraseña." });
+  }
+};
 const updateFavorites = async (req, res) => {
   try {
     const { favoritos } = req.body;

@@ -8,7 +8,9 @@ const {
   resetPasswordRequest,
   resetPassword,
   logoutUser,
-  updateFavorites
+  updateFavorites,
+  changePassword,
+  deleteAccount
 } = require("../controllers/userController");
 
 const authMiddleware = require("../middlewares/authMiddleware");
@@ -41,5 +43,9 @@ router.get("/activate/:token", activateAccount);
 // Restablecimiento de contraseña
 router.post("/reset-password-request", passwordResetRequestValidator, validateFields, resetPasswordRequest);
 router.post("/reset-password/:token", passwordResetValidator, validateFields, resetPassword);
+
+// Cambiar contraseña y eliminar cuenta
+router.post("/change-password", authMiddleware, changePassword);
+router.post("/delete-account", authMiddleware, deleteAccount);
 
 module.exports = router;

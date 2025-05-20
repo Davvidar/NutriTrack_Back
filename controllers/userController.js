@@ -191,7 +191,59 @@ const resetPasswordRequest = async (req, res) => {
   }
 };
 
-// Confirmar restablecimiento
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+    // Verificar contraseña actual
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(400).json({ message: "Contraseña actual incorrecta" });
+
+    // Hashear nueva contraseña
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // Actualizar contraseña
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: "Contraseña actualizada correctamente" });
+  } catch (error) {
+    res.status(500).json({ message: "Error al cambiar contraseña", error });
+  }
+};
+
+// Eliminar cuenta
+const deleteAccount = async (req, res) => {
+  try {
+    const { password } = req.body;
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+    // Verificar contraseña
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ message: "Contraseña incorrecta" });
+
+    // Eliminar registros asociados (DailyLogs, Productos personales, etc.)
+    await DailyLog.deleteMany({ userId });
+    await Product.deleteMany({ userId });
+    await Recipe.deleteMany({ userId });
+    
+    // Eliminar el usuario
+    await User.findByIdAndDelete(userId);
+
+    res.json({ message: "Cuenta eliminada correctamente" });
+  } catch (error) {
+    res.status(500).json({ message: "Error al eliminar cuenta", error });
+  }
+};
+
+// Restablecer contraseña
 const resetPassword = async (req, res) => {
   const { token } = req.params;
   const { newPassword } = req.body;
@@ -217,51 +269,53 @@ const logoutUser = async (req, res) => {
   }
 };
 
+
+
 const updateFavorites = async (req, res) => {
   try {
     const { favoritos } = req.body;
     const userId = req.user.userId;
-    
+
     if (!Array.isArray(favoritos)) {
-      return res.status(400).json({ 
-        message: "Formato incorrecto", 
-        details: "Se esperaba un array de favoritos" 
+      return res.status(400).json({
+        message: "Formato incorrecto",
+        details: "Se esperaba un array de favoritos"
       });
     }
-    
+
     // Validar estructura de cada favorito
-    const isValidFavoritos = favoritos.every(fav => 
-      fav.tipo && ['product', 'recipe'].includes(fav.tipo) && 
+    const isValidFavoritos = favoritos.every(fav =>
+      fav.tipo && ['product', 'recipe'].includes(fav.tipo) &&
       fav.refId
     );
-    
+
     if (!isValidFavoritos && favoritos.length > 0) {
-      return res.status(400).json({ 
-        message: "Formato de favoritos inválido", 
+      return res.status(400).json({
+        message: "Formato de favoritos inválido",
         details: "Cada favorito debe tener un campo 'tipo' (product o recipe) y un campo 'refId'"
       });
     }
-    
+
     // Actualizar solo el campo favoritos
     const user = await User.findByIdAndUpdate(
       userId,
       { $set: { favoritos } },
       { new: true, select: "-password" }
     );
-    
+
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
-    
-    res.json({ 
-      message: "Favoritos actualizados", 
-      favoritos: user.favoritos 
+
+    res.json({
+      message: "Favoritos actualizados",
+      favoritos: user.favoritos
     });
-    
+
   } catch (error) {
-    res.status(500).json({ 
-      message: "Error al actualizar favoritos", 
-      error: error.message 
+    res.status(500).json({
+      message: "Error al actualizar favoritos",
+      error: error.message
     });
   }
 };
@@ -274,5 +328,7 @@ module.exports = {
   resetPasswordRequest,
   resetPassword,
   logoutUser,
-  updateFavorites
+  updateFavorites,
+  changePassword,
+  deleteAccount
 };

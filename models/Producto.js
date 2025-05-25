@@ -15,10 +15,10 @@ const productSchema = new mongoose.Schema({
   fibra: { type: Number },                // opcional
   sal: { type: Number },                  // opcional
 
-  // Porción sugerida, en gramos (ejemplo: 125g para un yogur)
+
   porcion: { type: Number },
   
-  // Si es creado por un usuario, se almacena su id; si es global, userId es null
+  // Si es creado por un usuario, se almacena su id, si es global userId es null
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }
 });
 

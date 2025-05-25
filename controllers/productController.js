@@ -81,7 +81,7 @@ const updateProduct = async (req, res) => {
     const isAdmin = req.user.rol === "admin";
     const isOwner = product.userId && product.userId.toString() === req.user.userId;
 
-    // Producto general: solo admin puede modificar
+    // Producto general (solo admin puede modificar)
     if (!product.userId && !isAdmin) {
       return res.status(403).json({ message: "No puedes modificar productos generales" });
     }
@@ -104,7 +104,7 @@ const updateProduct = async (req, res) => {
       sal,
       porcion,
       codigoBarras,
-      userId // cuidado con este campo si se intenta convertir a general
+      userId 
     } = req.body;
 
     // Permitir conversión a producto general solo si es admin
@@ -125,7 +125,7 @@ const updateProduct = async (req, res) => {
     if (porcion !== undefined) product.porcion = porcion;
     if (codigoBarras !== undefined) product.codigoBarras = codigoBarras;
 
-    // Permitir conversión a general
+  
     if (isAdmin && userId === null) product.userId = null;
 
     await product.save();
@@ -146,12 +146,11 @@ const deleteProduct = async (req, res) => {
     const isAdmin = req.user.rol === "admin";
     const isOwner = product.userId && product.userId.toString() === req.user.userId;
 
-    // Producto general: solo admin puede eliminar
+    // Producto general(solo admin puede eliminar)
     if (!product.userId && !isAdmin) {
       return res.status(403).json({ message: "No puedes eliminar productos generales" });
     }
 
-    // Producto de otro usuario: denegado
     if (product.userId && !isOwner && !isAdmin) {
       return res.status(403).json({ message: "No tienes permiso para eliminar este producto" });
     }
@@ -185,7 +184,7 @@ const getProductByBarcode = async (req, res) => {
   }
 };
 
-// Búsqueda avanzada con filtros
+// Búsqueda filtros
 const searchProducts = async (req, res) => {
   try {
     const userId = req.user.userId;

@@ -24,20 +24,13 @@ const createDailyLog = async (req, res) => {
     let { fecha, pesoDelDia, comidas } = req.body;
 
     let dateToSave;
-
-    // Assuming fecha comes as 'YYYY-MM-DD' string from the frontend
     if (fecha) {
-      // Create a moment object for the start of the day in Spain's timezone
       dateToSave = moment.tz(fecha, 'YYYY-MM-DD', SPAIN_TIMEZONE).startOf('day').toDate();
     } else {
-      // If no date provided, use the start of the current day in Spain's timezone
       dateToSave = moment.tz(SPAIN_TIMEZONE).startOf('day').toDate();
     }
 
     console.log('Backend - Creando registro para fecha (UTC almacenada):', dateToSave);
-
-    // To check for existing logs for the same date in Spain's timezone,
-    // we need the UTC range that corresponds to that day in Spain.
     const startOfSpainDayUTC = moment.tz(dateToSave, SPAIN_TIMEZONE).startOf('day').toDate();
     const endOfSpainDayUTC = moment.tz(dateToSave, SPAIN_TIMEZONE).endOf('day').toDate();
 
@@ -48,17 +41,11 @@ const createDailyLog = async (req, res) => {
     });
 
     if (logExistente) {
-      // You might want to return the existing log here, depending on desired behavior
       return res.status(400).json({ message: "Ya existe un registro para esta fecha" });
     }
 
     const nuevoLog = new DailyLog({ userId, fecha: dateToSave, pesoDelDia, comidas });
     await nuevoLog.save();
-
-    // When returning, you might want to convert the stored UTC date back to
-    // Spain's timezone for consistency with the frontend if needed, but Mongoose
-    // typically returns Date objects which frontend can handle based on local settings.
-    // For simplicity, returning the saved object as is.
     res.status(201).json(nuevoLog);
   } catch (error) {
     console.error("Error al crear registro diario:", error);
@@ -70,10 +57,7 @@ const createDailyLog = async (req, res) => {
 const getDailyLogs = async (req, res) => {
   try {
     const userId = req.user.userId;
-    // Assuming you want to sort by date in descending order
     const logs = await DailyLog.find({ userId }).sort({ fecha: -1 });
-    // Dates retrieved from MongoDB are UTC. If frontend needs them in Spain's time,
-    // convert them on the frontend or here before sending.
     res.json(logs);
   } catch (error) {
     console.error("Error al obtener registros diarios:", error);
@@ -88,8 +72,8 @@ const getDailyLogById = async (req, res) => {
     if (!log || log.userId.toString() !== req.user.userId) {
       return res.status(404).json({ message: "Registro no encontrado o sin acceso" });
     }
-    // Date retrieved is UTC. Convert if frontend needs Spain's time specifically.
     res.json(log);
+
   } catch (error) {
     console.error("Error al obtener registro diario por ID:", error);
     res.status(500).json({ message: "Error al obtener registro diario", error: error.message });
@@ -106,7 +90,7 @@ const updateDailyLog = async (req, res) => {
 
     const { pesoDelDia, comidas } = req.body;
     if (pesoDelDia !== undefined) log.pesoDelDia = pesoDelDia;
-    if (comidas !== undefined) log.comidas = comidas; // Assuming comidas structure is correct
+    if (comidas !== undefined) log.comidas = comidas; 
 
     await log.save();
     res.json(log);
@@ -125,14 +109,14 @@ const getDailyLogByDate = async (req, res) => {
     let dateToQuery;
 
     if (fechaParam) {
-        // Create a moment object for the start of the specified day in Spain's timezone
-        dateToQuery = moment.tz(fechaParam, 'YYYY-MM-DD', SPAIN_TIMEZONE);
-        if (!dateToQuery.isValid()) {
-             return res.status(400).json({ message: "Formato de fecha inválido. Use YYYY-MM-DD." });
-        }
+      // Create a moment object for the start of the specified day in Spain's timezone
+      dateToQuery = moment.tz(fechaParam, 'YYYY-MM-DD', SPAIN_TIMEZONE);
+      if (!dateToQuery.isValid()) {
+        return res.status(400).json({ message: "Formato de fecha inválido. Use YYYY-MM-DD." });
+      }
     } else {
-        // If no date, use the start of the current day in Spain's timezone
-        dateToQuery = moment.tz(SPAIN_TIMEZONE);
+      // If no date, use the start of the current day in Spain's timezone
+      dateToQuery = moment.tz(SPAIN_TIMEZONE);
     }
 
     // Calculate the UTC range corresponding to the start and end of the day in Spain
@@ -177,14 +161,14 @@ const getResumenNutricional = async (req, res) => {
     let dateToQuery;
 
     if (fechaParam) {
-        // Create a moment object for the start of the specified day in Spain's timezone
-        dateToQuery = moment.tz(fechaParam, 'YYYY-MM-DD', SPAIN_TIMEZONE);
-         if (!dateToQuery.isValid()) {
-             return res.status(400).json({ message: "Formato de fecha inválido. Use YYYY-MM-DD." });
-        }
+      // Create a moment object for the start of the specified day in Spain's timezone
+      dateToQuery = moment.tz(fechaParam, 'YYYY-MM-DD', SPAIN_TIMEZONE);
+      if (!dateToQuery.isValid()) {
+        return res.status(400).json({ message: "Formato de fecha inválido. Use YYYY-MM-DD." });
+      }
     } else {
-        // If no date, use the start of the current day in Spain's timezone
-        dateToQuery = moment.tz(SPAIN_TIMEZONE);
+      // If no date, use the start of the current day in Spain's timezone
+      dateToQuery = moment.tz(SPAIN_TIMEZONE);
     }
 
     // Calculate the UTC range corresponding to the start and end of the day in Spain
@@ -201,12 +185,12 @@ const getResumenNutricional = async (req, res) => {
     ]);
 
     if (!user) {
-        return res.status(404).json({ message: "Usuario no encontrado." });
+      return res.status(404).json({ message: "Usuario no encontrado." });
     }
 
     if (!dailyLog) {
       // Return structure with date set to the start of the queried/current day in Spain's timezone
-       const defaultDate = dateToQuery.startOf('day').toDate(); // Store UTC equivalent of start of day in Spain
+      const defaultDate = dateToQuery.startOf('day').toDate(); // Store UTC equivalent of start of day in Spain
       return res.json({
         message: "Sin registro en esta fecha",
         fecha: defaultDate, // Include the date for clarity
@@ -262,15 +246,15 @@ const getResumenNutricional = async (req, res) => {
     });
 
     // Procesar recetas
-     recipeItems.forEach(({ recipeId, cantidad }) => {
-        const recipe = recipeMap.get(recipeId.toString());
-        if (recipe && recipe.pesoFinal > 0) { // Prevent division by zero
-            const factor = cantidad / recipe.pesoFinal;
-            consumido.calorias += recipe.calorias * factor;
-            consumido.proteinas += recipe.proteinas * factor;
-            consumido.carbohidratos += recipe.carbohidratos * factor;
-            consumido.grasas += recipe.grasas * factor;
-        }
+    recipeItems.forEach(({ recipeId, cantidad }) => {
+      const recipe = recipeMap.get(recipeId.toString());
+      if (recipe && recipe.pesoFinal > 0) { // Prevent division by zero
+        const factor = cantidad / recipe.pesoFinal;
+        consumido.calorias += recipe.calorias * factor;
+        consumido.proteinas += recipe.proteinas * factor;
+        consumido.carbohidratos += recipe.carbohidratos * factor;
+        consumido.grasas += recipe.grasas * factor;
+      }
     });
 
 
@@ -288,10 +272,10 @@ const getResumenNutricional = async (req, res) => {
     };
 
     res.json({
-       fecha: dailyLog.fecha, // Include the date for clarity
-       consumido,
-       objetivo,
-       diferencia
+      fecha: dailyLog.fecha, // Include the date for clarity
+      consumido,
+      objetivo,
+      diferencia
     });
   } catch (error) {
     console.error("Error en getResumenNutricional:", error);

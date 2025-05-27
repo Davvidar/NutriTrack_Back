@@ -18,8 +18,8 @@ const {
   deleteAccount
 } = require("../controllers/userController");
 
-// Importar el nuevo controlador de Google Auth
-const { googleAuth } = require("../controllers/googleAuthController");
+// Controlador de Google Auth
+/* const { googleAuth } = require("../controllers/googleAuthController"); */
 
 const authMiddleware = require("../middlewares/authMiddleware");
 const validateFields = require("../middlewares/validateFields");
@@ -38,9 +38,9 @@ router.post("/register", userRegisterValidator, validateFields, registerUser);
 router.post("/login", userLoginValidator, validateFields, loginUser);
 router.post("/logout", logoutUser);
 
-// Nueva ruta para autenticación con Google
-router.post("/google-auth", googleAuth);
-
+// Ruta para autenticación con Google
+/* router.post("/google-auth", googleAuth);
+ */
 // Perfil
 router.get("/profile", authMiddleware, getProfile);
 router.put("/profile", authMiddleware, updateProfile); 

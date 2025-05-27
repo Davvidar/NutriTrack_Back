@@ -21,7 +21,7 @@ const authMiddleware = async (req, res, next) => {
 
     req.user = {
       userId: user._id.toString(),
-      rol: user.rol || "user" // por si no tiene campo 'rol', se asume user
+      rol: user.rol || "user" 
     };
 
     next();

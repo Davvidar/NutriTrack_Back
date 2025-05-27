@@ -22,13 +22,28 @@ const userSchema = new mongoose.Schema({
     tipo: { type: String, enum: ["product", "recipe"], required: true },
     refId: { type: mongoose.Schema.Types.ObjectId, required: true, refPath: "favoritos.tipo" }
   }],
+  
   isActive: { type: Boolean, default: false },
   rol: {
     type: String,
     enum: ["user", "admin"],
     default: "user"
-  }
+  },
   
+  // Nuevos campos para autenticación con Google
+  googleUser: { type: Boolean, default: false },
+  googleId: { type: String, sparse: true },
+  profilePicture: { type: String }, // URL de la imagen de perfil de Google
+  
+  // Metadatos
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// Middleware para actualizar updatedAt antes de guardar
+userSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
 module.exports = mongoose.model("User", userSchema);

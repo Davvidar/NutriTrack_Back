@@ -25,12 +25,27 @@ const getHistorialPeso = async (req, res) => {
 const getMediaSemanalPeso = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const sieteDiasAtras = new Date();
-    sieteDiasAtras.setDate(sieteDiasAtras.getDate() - 7);
+    const { startDate, endDate } = req.query;
+
+    let fechaInicio, fechaFin;
+
+    if (startDate && endDate) {
+      // Si se proporcionan fechas específicas, usarlas
+      fechaInicio = new Date(startDate);
+      fechaFin = new Date(endDate);
+      fechaFin.setHours(23, 59, 59, 999); // Final del día
+    } else {
+      // Si no se proporcionan fechas, usar los últimos 7 días (comportamiento original)
+      fechaFin = new Date();
+      fechaInicio = new Date();
+      fechaInicio.setDate(fechaInicio.getDate() - 7);
+    }
+
+    console.log('Calculando media semanal desde:', fechaInicio, 'hasta:', fechaFin);
 
     const logs = await DailyLog.find({
       userId,
-      fecha: { $gte: sieteDiasAtras },
+      fecha: { $gte: fechaInicio, $lte: fechaFin },
       pesoDelDia: { $exists: true, $ne: null }
     });
 
@@ -43,11 +58,12 @@ const getMediaSemanalPeso = async (req, res) => {
 
     res.json({ media: Number(media.toFixed(2)), diasConDatos: logs.length });
   } catch (error) {
+    console.error('Error al calcular media semanal:', error);
     res.status(500).json({ message: "Error al calcular media semanal", error });
   }
-};
+}
 
-module.exports = {
-  getHistorialPeso,
-  getMediaSemanalPeso
-};
+  module.exports = {
+    getHistorialPeso,
+    getMediaSemanalPeso
+  };

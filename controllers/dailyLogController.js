@@ -2,7 +2,7 @@ const DailyLog = require("../models/DailyLog");
 const Product = require("../models/Producto");
 const Recipe = require("../models/Recipe");
 const User = require("../models/User");
-const moment = require('moment-timezone'); // Import moment-timezone
+const moment = require('moment-timezone');
 
 // Define the timezone for Spain
 const SPAIN_TIMEZONE = 'Europe/Madrid';
@@ -104,22 +104,21 @@ const updateDailyLog = async (req, res) => {
 const getDailyLogByDate = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const fechaParam = req.query.fecha; // Assuming fechaParam is 'YYYY-MM-DD'
+    const fechaParam = req.query.fecha;
 
     let dateToQuery;
 
     if (fechaParam) {
-      // Create a moment object for the start of the specified day in Spain's timezone
+
       dateToQuery = moment.tz(fechaParam, 'YYYY-MM-DD', SPAIN_TIMEZONE);
       if (!dateToQuery.isValid()) {
         return res.status(400).json({ message: "Formato de fecha inválido. Use YYYY-MM-DD." });
       }
     } else {
-      // If no date, use the start of the current day in Spain's timezone
       dateToQuery = moment.tz(SPAIN_TIMEZONE);
     }
 
-    // Calculate the UTC range corresponding to the start and end of the day in Spain
+    
     const startOfSpainDayUTC = dateToQuery.clone().startOf('day').toDate();
     const endOfSpainDayUTC = dateToQuery.clone().endOf('day').toDate();
 
@@ -131,12 +130,12 @@ const getDailyLogByDate = async (req, res) => {
     });
 
     if (dailyLog) {
-      // Date retrieved is UTC. Convert if frontend needs Spain's time specifically.
+      
       return res.json(dailyLog);
     }
 
-    // If no record exists, return a default structure with the date set to
-    // the start of the queried/current day in Spain's timezone (as a Date object, stored as UTC)
+    
+    
     const defaultDate = dateToQuery.startOf('day').toDate(); // Store UTC equivalent of start of day in Spain
 
     res.json({
@@ -156,22 +155,22 @@ const getDailyLogByDate = async (req, res) => {
 const getResumenNutricional = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const fechaParam = req.query.fecha; // Assuming fechaParam is 'YYYY-MM-DD'
+    const fechaParam = req.query.fecha; 
 
     let dateToQuery;
 
     if (fechaParam) {
-      // Create a moment object for the start of the specified day in Spain's timezone
+      
       dateToQuery = moment.tz(fechaParam, 'YYYY-MM-DD', SPAIN_TIMEZONE);
       if (!dateToQuery.isValid()) {
         return res.status(400).json({ message: "Formato de fecha inválido. Use YYYY-MM-DD." });
       }
     } else {
-      // If no date, use the start of the current day in Spain's timezone
+      
       dateToQuery = moment.tz(SPAIN_TIMEZONE);
     }
 
-    // Calculate the UTC range corresponding to the start and end of the day in Spain
+    
     const startOfSpainDayUTC = dateToQuery.clone().startOf('day').toDate();
     const endOfSpainDayUTC = dateToQuery.clone().endOf('day').toDate();
 
@@ -189,8 +188,8 @@ const getResumenNutricional = async (req, res) => {
     }
 
     if (!dailyLog) {
-      // Return structure with date set to the start of the queried/current day in Spain's timezone
-      const defaultDate = dateToQuery.startOf('day').toDate(); // Store UTC equivalent of start of day in Spain
+      
+      const defaultDate = dateToQuery.startOf('day').toDate(); 
       return res.json({
         message: "Sin registro en esta fecha",
         fecha: defaultDate, // Include the date for clarity
@@ -272,7 +271,7 @@ const getResumenNutricional = async (req, res) => {
     };
 
     res.json({
-      fecha: dailyLog.fecha, // Include the date for clarity
+      fecha: dailyLog.fecha,
       consumido,
       objetivo,
       diferencia

@@ -1,3 +1,4 @@
+// routes/userRoutes.js - Versión actualizada
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
@@ -17,6 +18,9 @@ const {
   deleteAccount
 } = require("../controllers/userController");
 
+// Importar el nuevo controlador de Google Auth
+const { googleAuth } = require("../controllers/googleAuthController");
+
 const authMiddleware = require("../middlewares/authMiddleware");
 const validateFields = require("../middlewares/validateFields");
 const {
@@ -29,17 +33,18 @@ const {
 
 const router = express.Router();
 
-// Registro y login
+// Registro y login tradicional
 router.post("/register", userRegisterValidator, validateFields, registerUser);
 router.post("/login", userLoginValidator, validateFields, loginUser);
 router.post("/logout", logoutUser);
 
+// Nueva ruta para autenticación con Google
+router.post("/google-auth", googleAuth);
+
 // Perfil
 router.get("/profile", authMiddleware, getProfile);
 router.put("/profile", authMiddleware, updateProfile); 
-
 router.put("/favorites", authMiddleware, updateFavorites);
-
 
 // Activación
 router.get("/activate/:token", activateAccount);
@@ -48,17 +53,15 @@ router.get("/activate/:token", activateAccount);
 router.post("/reset-password-request", passwordResetRequestValidator, validateFields, resetPasswordRequest);
 router.post("/reset-password/:token", passwordResetValidator, validateFields, resetPassword);
 
-// eliminar cuenta
+// Gestión de cuenta
 router.post("/delete-account", authMiddleware, deleteAccount);
 router.post("/change-password", authMiddleware, changePassword);
 
-// Cambiar contraseña
+// Rutas EJS para restablecimiento de contraseña
 router.get("/reset-password/:token", (req, res) => {
   try {
     const { token } = req.params;
-
     jwt.verify(token, process.env.JWT_SECRET);
-
     res.render('auth/reset-password', { token, error: null });
   } catch (error) {
     console.error("Error al verificar token:", error);
@@ -86,7 +89,6 @@ router.post("/reset-password/:token", async (req, res) => {
   }
   
   try {
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
     
@@ -94,7 +96,6 @@ router.post("/reset-password/:token", async (req, res) => {
       return res.render('auth/reset-error');
     }
     
-
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();
@@ -106,6 +107,5 @@ router.post("/reset-password/:token", async (req, res) => {
     res.render('auth/reset-error');
   }
 });
-
 
 module.exports = router;

@@ -1,4 +1,8 @@
 const DailyLog = require("../models/DailyLog");
+const moment = require('moment-timezone');
+
+// Define the timezone for Spain
+const SPAIN_TIMEZONE = 'Europe/Madrid';
 
 // Obtener historial completo de peso del usuario
 const getHistorialPeso = async (req, res) => {
@@ -30,15 +34,14 @@ const getMediaSemanalPeso = async (req, res) => {
     let fechaInicio, fechaFin;
 
     if (startDate && endDate) {
-      // Si se proporcionan fechas específicas, usarlas
-      fechaInicio = new Date(startDate);
-      fechaFin = new Date(endDate);
-      fechaFin.setHours(23, 59, 59, 999); // Final del día
+      // Si se proporcionan fechas específicas, usarlas con zona horaria de España
+      fechaInicio = moment.tz(startDate, 'YYYY-MM-DD', SPAIN_TIMEZONE).startOf('day').toDate();
+      fechaFin = moment.tz(endDate, 'YYYY-MM-DD', SPAIN_TIMEZONE).endOf('day').toDate();
     } else {
-      // Si no se proporcionan fechas, usar los últimos 7 días (comportamiento original)
-      fechaFin = new Date();
-      fechaInicio = new Date();
-      fechaInicio.setDate(fechaInicio.getDate() - 7);
+      // Si no se proporcionan fechas, usar los últimos 7 días en zona horaria de España
+      const todaySpain = moment.tz(SPAIN_TIMEZONE);
+      fechaFin = todaySpain.clone().endOf('day').toDate();
+      fechaInicio = todaySpain.clone().subtract(7, 'days').startOf('day').toDate();
     }
 
     console.log('Calculando media semanal desde:', fechaInicio, 'hasta:', fechaFin);
@@ -78,26 +81,22 @@ const getMediasSemanales = async (req, res) => {
       return res.json([]);
     }
 
-    // Agrupar por semanas
+    // Agrupar por semanas usando zona horaria de España
     const weeklyData = new Map();
     
     logs.forEach(log => {
-      const fecha = new Date(log.fecha);
+      // Convertir la fecha del log a zona horaria de España
+      const fechaSpain = moment.tz(log.fecha, SPAIN_TIMEZONE);
       
       // Obtener el lunes de la semana de esta fecha
-      const dayOfWeek = fecha.getDay();
-      const daysToMonday = (dayOfWeek === 0 ? 6 : dayOfWeek - 1); // Domingo = 0, queremos Lunes = 0
-      const monday = new Date(fecha);
-      monday.setDate(fecha.getDate() - daysToMonday);
-      monday.setHours(0, 0, 0, 0);
-      
-      const weekKey = monday.toISOString().split('T')[0]; // YYYY-MM-DD del lunes
+      const monday = fechaSpain.clone().startOf('isoWeek'); // isoWeek empieza en lunes
+      const weekKey = monday.format('YYYY-MM-DD'); // YYYY-MM-DD del lunes
       
       if (!weeklyData.has(weekKey)) {
         weeklyData.set(weekKey, {
           fecha: weekKey,
           pesos: [],
-          fechaLunes: monday
+          fechaLunes: monday.toDate()
         });
       }
       
@@ -127,55 +126,76 @@ const getMediasSemanales = async (req, res) => {
   }
 };
 
-// NUEVO: Obtener comparación semanal detallada
+// MEJORADO: Obtener comparación semanal detallada con zona horaria correcta
 const getComparacionSemanal = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const today = new Date();
     
-    // Calcular fechas para semana actual y anterior
-    const currentWeekStart = new Date(today);
-    const dayOfWeek = today.getDay();
-    const daysToMonday = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
-    currentWeekStart.setDate(today.getDate() - daysToMonday);
-    currentWeekStart.setHours(0, 0, 0, 0);
+    // IMPORTANTE: Usar zona horaria de España para "hoy"
+    const todaySpain = moment.tz(SPAIN_TIMEZONE);
     
-    const currentWeekEnd = new Date(currentWeekStart);
-    currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
-    currentWeekEnd.setHours(23, 59, 59, 999);
+    console.log('🔍 Backend - Fecha de hoy en España:', todaySpain.format('YYYY-MM-DD HH:mm:ss'));
     
-    const previousWeekStart = new Date(currentWeekStart);
-    previousWeekStart.setDate(currentWeekStart.getDate() - 7);
+    // Calcular fechas para semana actual y anterior usando zona horaria de España
+    const currentWeekStart = todaySpain.clone().startOf('isoWeek'); // Lunes de esta semana
+    const currentWeekEnd = todaySpain.clone().endOf('isoWeek'); // Domingo de esta semana
     
-    const previousWeekEnd = new Date(currentWeekStart);
-    previousWeekEnd.setDate(currentWeekStart.getDate() - 1);
-    previousWeekEnd.setHours(23, 59, 59, 999);
+    const previousWeekStart = currentWeekStart.clone().subtract(1, 'week');
+    const previousWeekEnd = currentWeekStart.clone().subtract(1, 'day').endOf('day');
 
-    // Obtener peso de hoy
-    const todayStart = new Date(today);
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(today);
-    todayEnd.setHours(23, 59, 59, 999);
+    console.log('🔍 Backend - Rangos de fechas:', {
+      hoySpain: todaySpain.format('YYYY-MM-DD'),
+      semanaActualInicio: currentWeekStart.format('YYYY-MM-DD'),
+      semanaActualFin: currentWeekEnd.format('YYYY-MM-DD'),
+      semanaAnteriorInicio: previousWeekStart.format('YYYY-MM-DD'),
+      semanaAnteriorFin: previousWeekEnd.format('YYYY-MM-DD')
+    });
+
+    // Obtener peso de HOY usando rango de todo el día en España
+    const todayStartUTC = todaySpain.clone().startOf('day').toDate();
+    const todayEndUTC = todaySpain.clone().endOf('day').toDate();
+    
+    console.log('🔍 Backend - Buscando peso de hoy entre (UTC):', {
+      inicio: todayStartUTC,
+      fin: todayEndUTC
+    });
     
     const todayLog = await DailyLog.findOne({
       userId,
-      fecha: { $gte: todayStart, $lte: todayEnd },
+      fecha: { $gte: todayStartUTC, $lte: todayEndUTC },
       pesoDelDia: { $exists: true, $ne: null }
+    });
+
+    console.log('🔍 Backend - Log de hoy encontrado:', {
+      encontrado: !!todayLog,
+      fecha: todayLog?.fecha,
+      peso: todayLog?.pesoDelDia
     });
 
     // Obtener datos de ambas semanas en paralelo
     const [currentWeekLogs, previousWeekLogs] = await Promise.all([
       DailyLog.find({
         userId,
-        fecha: { $gte: currentWeekStart, $lte: currentWeekEnd },
+        fecha: { 
+          $gte: currentWeekStart.toDate(), 
+          $lte: currentWeekEnd.toDate() 
+        },
         pesoDelDia: { $exists: true, $ne: null }
       }),
       DailyLog.find({
         userId,
-        fecha: { $gte: previousWeekStart, $lte: previousWeekEnd },
+        fecha: { 
+          $gte: previousWeekStart.toDate(), 
+          $lte: previousWeekEnd.toDate() 
+        },
         pesoDelDia: { $exists: true, $ne: null }
       })
     ]);
+
+    console.log('🔍 Backend - Logs encontrados:', {
+      semanaActual: currentWeekLogs.length,
+      semanaAnterior: previousWeekLogs.length
+    });
 
     // Calcular medias
     const currentWeekAverage = currentWeekLogs.length > 0 ? 
@@ -192,11 +212,14 @@ const getComparacionSemanal = async (req, res) => {
       todayWeight: todayLog ? Number(todayLog.pesoDelDia.toFixed(1)) : null,
       currentWeekDays: currentWeekLogs.length,
       previousWeekDays: previousWeekLogs.length,
-      currentWeekStart: currentWeekStart.toISOString().split('T')[0],
-      previousWeekStart: previousWeekStart.toISOString().split('T')[0]
+      currentWeekStart: currentWeekStart.format('YYYY-MM-DD'),
+      previousWeekStart: previousWeekStart.format('YYYY-MM-DD'),
+      // Información adicional para debugging
+      todaySpainDate: todaySpain.format('YYYY-MM-DD'),
+      timezone: SPAIN_TIMEZONE
     };
 
-    console.log('Comparación semanal calculada:', response);
+    console.log('🔍 Backend - Comparación semanal calculada:', response);
     res.json(response);
 
   } catch (error) {
@@ -208,6 +231,6 @@ const getComparacionSemanal = async (req, res) => {
 module.exports = {
   getHistorialPeso,
   getMediaSemanalPeso,
-  getMediasSemanales,        // NUEVO
-  getComparacionSemanal      // NUEVO
+  getMediasSemanales,
+  getComparacionSemanal
 };

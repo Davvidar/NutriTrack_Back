@@ -108,6 +108,8 @@ const updateProfile = async (req, res) => {
     if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
     const {
+      nombre,           // AGREGADO
+      apellido,         // AGREGADO
       peso,
       altura,
       edad,
@@ -117,6 +119,10 @@ const updateProfile = async (req, res) => {
       objetivosNutricionales // opcional si se editan manualmente
     } = req.body;
 
+    // AGREGAR estas líneas para actualizar nombre y apellido
+    if (nombre !== undefined) user.nombre = nombre;
+    if (apellido !== undefined) user.apellido = apellido;
+    
     if (peso !== undefined) user.peso = peso;
     if (altura !== undefined) user.altura = altura;
     if (edad !== undefined) user.edad = edad;

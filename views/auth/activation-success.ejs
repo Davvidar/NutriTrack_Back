@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriTrack - Cuenta Activada</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            margin-top: 40px;
+            text-align: center;
+            border: 3px solid #6ab04c;
+        }
+        .logo {
+            margin-bottom: 30px;
+        }
+        .logo img {
+            width: 100px;
+            height: auto;
+        }
+        .logo h1 {
+            color: #6ab04c;
+            font-size: 28px;
+            margin: 15px 0 0 0;
+            font-weight: 700;
+        }
+        .success-icon {
+            font-size: 80px;
+            color: #6ab04c;
+            margin-bottom: 25px;
+            text-shadow: 0 2px 4px rgba(106, 176, 76, 0.3);
+        }
+        .main-title {
+            color: #6ab04c;
+            font-size: 32px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        .welcome-message {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        .description {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #555;
+            line-height: 1.7;
+        }
+        .already-active {
+            background-color: #e8f5e8;
+            border: 2px solid #6ab04c;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            color: #2d5016;
+        }
+        .features {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        .features h3 {
+            color: #6ab04c;
+            font-size: 20px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+        .features li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+            font-size: 15px;
+            color: #555;
+        }
+        .features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #6ab04c;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 25px;
+            border-top: 2px solid #e9ecef;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .social-links {
+            margin-top: 20px;
+        }
+        .social-links a {
+            color: #6ab04c;
+            text-decoration: none;
+            margin: 0 10px;
+            font-weight: 600;
+        }
+        .social-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive design */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 25px;
+                margin-top: 20px;
+            }
+            .main-title {
+                font-size: 26px;
+            }
+            .btn {
+                width: 200px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="../../assets/logo.png" alt="NutriTrack Logo">
+            <h1>nutritrack</h1>
+        </div>
+        
+        
+        
+        <h1 class="main-title">¡Cuenta Activada!</h1>
+        
+        <% if (nombreUsuario) { %>
+            <p class="welcome-message">¡Bienvenido a NutriTrack, <%= nombreUsuario %>!</p>
+        <% } %>
+        
+        <div class="description">
+            <% if (locals.yaActivada) { %>
+                <div class="already-active">
+                    <p><strong>ℹTu cuenta ya estaba activada</strong></p>
+                    <p><%= mensaje || 'Tu cuenta ya estaba activada anteriormente. Puedes iniciar sesión normalmente.' %></p>
+                </div>
+            <% } else { %>
+                <p><%= mensaje || 'Tu cuenta ha sido activada exitosamente. Ya puedes comenzar tu viaje hacia una alimentación más saludable y controlada.' %></p>
+            <% } %>
+        </div>
+
+
+        <div class="footer">
+            <p style="margin-top: 25px;">
+                <em>Gracias por elegir NutriTrack para cuidar tu alimentación.</em>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function redirectToLogin() {
+            // Redirigir a la página de login de la aplicación
+            window.location.href = '/auth/login';
+        }
+
+        function downloadApp() {
+            // Mostrar opciones de descarga o redirigir a las tiendas
+            alert('¡Descarga NutriTrack desde tu tienda de aplicaciones!\n\n📱 iOS: App Store\n🤖 Android: Google Play Store');
+        }
+    </script>
+</body>
+</html>

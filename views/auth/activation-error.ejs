@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriTrack - Error de Activación</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            margin-top: 40px;
+            text-align: center;
+            border: 3px solid #e74c3c;
+        }
+        .logo {
+            margin-bottom: 30px;
+        }
+        .logo img {
+            width: 100px;
+            height: auto;
+        }
+        .logo h1 {
+            color: #6ab04c;
+            font-size: 28px;
+            margin: 15px 0 0 0;
+            font-weight: 700;
+        }
+        .error-icon {
+            font-size: 80px;
+            color: #e74c3c;
+            margin-bottom: 25px;
+            text-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+        }
+        .main-title {
+            color: #e74c3c;
+            font-size: 32px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        .error-message {
+            font-size: 18px;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        .error-details {
+            background-color: #ffeaa7;
+            border: 2px solid #fdcb6e;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            color: #856404;
+            text-align: left;
+        }
+        .error-details h4 {
+            margin-top: 0;
+            color: #856404;
+            text-align: center;
+        }
+        .description {
+            margin-bottom: 30px;
+            font-size: 16px;
+            color: #555;
+            line-height: 1.7;
+        }
+        .solutions {
+            background-color: #fff3cd;
+            border: 2px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        .solutions h3 {
+            color: #856404;
+            font-size: 20px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .solutions ul {
+            list-style: none;
+            padding: 0;
+        }
+        .solutions li {
+            margin-bottom: 12px;
+            padding-left: 25px;
+            position: relative;
+            font-size: 15px;
+            color: #856404;
+            line-height: 1.5;
+        }
+        .solutions li::before {
+            content: '💡';
+            position: absolute;
+            left: 0;
+            font-size: 16px;
+        }
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 14px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn-primary {
+            background-color: #6ab04c;
+            color: white;
+            border-color: #6ab04c;
+        }
+        .btn-primary:hover {
+            background-color: #5a9d3e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(106, 176, 76, 0.3);
+        }
+        .btn-secondary {
+            background-color: transparent;
+            color: #6ab04c;
+            border-color: #6ab04c;
+        }
+        .btn-secondary:hover {
+            background-color: #6ab04c;
+            color: white;
+            transform: translateY(-2px);
+        }
+        .contact-info {
+            background-color: #e8f5e8;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+        .contact-info h3 {
+            color: #6ab04c;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .contact-info p {
+            margin: 8px 0;
+            color: #2d5016;
+        }
+        .contact-info a {
+            color: #6ab04c;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 25px;
+            border-top: 2px solid #e9ecef;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        .error-code {
+            font-family: 'Courier New', monospace;
+            background-color: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        /* Responsive design */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 25px;
+                margin-top: 20px;
+            }
+            .main-title {
+                font-size: 26px;
+            }
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            .btn {
+                width: 100%;
+                max-width: 250px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="../../assets/logo.png" alt="NutriTrack Logo">
+            <h1>nutritrack</h1>
+        </div>
+        
+
+        
+        <h1 class="main-title">Error de Activación</h1>
+        
+        <p class="error-message">
+            <%= error || 'No pudimos activar tu cuenta' %>
+        </p>
+        
+        <% if (locals.errorDetails) { %>
+            <div class="error-details">
+                <h4>Detalles del error:</h4>
+                <p><%= errorDetails %></p>
+                <% if (locals.errorType) { %>
+                    <div class="error-code">Código: <%= errorType %></div>
+                <% } %>
+            </div>
+        <% } %>
+
+        <div class="description">
+            <p>El enlace de activación ha expirado, no es válido o ya ha sido utilizado anteriormente.</p>
+        </div>
+
+
+        <div class="footer">
+            <p><strong>¿Primera vez en NutriTrack?</strong></p>
+            <p>Regístrate fácilmente y comienza a controlar tu alimentación de forma inteligente.</p>
+            <p style="margin-top: 15px;">
+                <em>Gracias por tu interés en NutriTrack.</em>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function tryLogin() {
+            // Redirigir a la página de login
+            window.location.href = '/auth/login';
+        }
+
+        function registerAgain() {
+            // Redirigir a la página de registro
+            window.location.href = '/auth/register';
+        }
+    </script>
+</body>
+</html>

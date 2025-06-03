@@ -155,14 +155,78 @@ const updateProfile = async (req, res) => {
 const activateAccount = async (req, res) => {
   try {
     const { token } = req.params;
+    
+    // Verificar el token JWT
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    await User.findByIdAndUpdate(decoded.userId, { isActive: true });
-    res.json({ message: "Cuenta activada exitosamente" });
+    
+    // Buscar el usuario por ID
+    const user = await User.findById(decoded.userId);
+    
+    // Verificar si el usuario existe
+    if (!user) {
+      console.error('Usuario no encontrado para activación:', decoded.userId);
+      return res.render('auth/activation-error', {
+        error: 'Usuario no encontrado',
+        errorDetails: 'El usuario asociado a este enlace de activación no existe en nuestro sistema.'
+      });
+    }
+    
+    // Verificar si la cuenta ya está activada
+    if (user.isActive) {
+      console.log('Cuenta ya activada para usuario:', user.correo);
+      // Renderizar éxito porque técnicamente la cuenta está activa
+      return res.render('auth/activation-success', {
+        nombreUsuario: user.nombre,
+        yaActivada: true,
+        mensaje: 'Tu cuenta ya estaba activada anteriormente. Puedes iniciar sesión normalmente.'
+      });
+    }
+    
+    // Activar la cuenta
+    await User.findByIdAndUpdate(decoded.userId, { 
+      isActive: true,
+      updatedAt: new Date()
+    });
+    
+    console.log('Cuenta activada exitosamente para usuario:', user.correo);
+    
+    // Renderizar plantilla de éxito
+    res.render('auth/activation-success', {
+      nombreUsuario: user.nombre,
+      correoUsuario: user.correo,
+      yaActivada: false,
+      mensaje: 'Tu cuenta ha sido activada exitosamente. ¡Bienvenido a NutriTrack!'
+    });
+    
   } catch (error) {
-    res.status(400).json({ message: "Token inválido o expirado" });
+    console.error('Error en activación de cuenta:', error);
+    
+    // Manejar diferentes tipos de errores
+    let errorMessage = 'Enlace de activación inválido';
+    let errorDetails = '';
+    
+    if (error.name === 'TokenExpiredError') {
+      errorMessage = 'Enlace de activación expirado';
+      errorDetails = 'El enlace de activación ha expirado. Los enlaces son válidos por 24 horas por motivos de seguridad.';
+    } else if (error.name === 'JsonWebTokenError') {
+      errorMessage = 'Enlace de activación inválido';
+      errorDetails = 'El enlace de activación no es válido o ha sido modificado.';
+    } else if (error.name === 'NotBeforeError') {
+      errorMessage = 'Enlace de activación no válido aún';
+      errorDetails = 'Este enlace de activación aún no es válido.';
+    } else {
+      errorMessage = 'Error interno del servidor';
+      errorDetails = 'Ha ocurrido un error inesperado. Por favor, contacta con soporte.';
+    }
+    
+    // Renderizar plantilla de error con detalles específicos
+    res.render('auth/activation-error', {
+      error: errorMessage,
+      errorDetails: errorDetails,
+      errorType: error.name || 'UnknownError'
+    });
   }
 };
-
 
 
 
@@ -271,7 +335,7 @@ const resetPasswordRequest = async (req, res) => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://i.ibb.co/85JwWGj/logo.png" alt="NutriTrack Logo" style="width: 80px; height: auto;">
+            <img src="../../assets/logo.png" alt="NutriTrack Logo" style="width: 80px; height: auto;">
             <h1 style="color: #6dbd3c; margin-top: 10px;">nutritrack</h1>
           </div>
           

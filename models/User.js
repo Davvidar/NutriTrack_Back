@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   peso: { type: Number, required: true },
   altura: { type: Number, required: true },
-  sexo: { type: String, enum: ["masculino", "femenino", "otro"], required: true },
+  sexo: { type: String, enum: ["masculino", "femenino"], required: true },
   edad: { type: Number, required: true },
   objetivo: { type: String, enum: ["perder peso", "mantenerse", "ganar músculo"], required: true },
   actividad: { type: String, enum: ["sedentario", "ligero", "moderado", "activo", "muy activo"], required: true },

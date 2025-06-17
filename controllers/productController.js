@@ -48,8 +48,8 @@ const createProduct = async (req, res) => {
 // Obtener todos los productos (globales + propios)
 const getProducts = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const products = await Product.find({ $or: [ { userId: null }, { userId } ] });
+    // Solo productos globales, no productos de usuarios específicos
+    const products = await Product.find({ userId: null });
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: "Error obteniendo productos", error });
@@ -195,10 +195,19 @@ const searchProducts = async (req, res) => {
     const normalized = query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // sin tildes
     const regex = new RegExp(normalized, "i");
 
-    // Condiciones base: Si mis=true, SOLO productos del usuario (no globales)
-    const baseFilter = mis === "true"
-      ? { userId } // Productos propios solamente
-      : { $or: [ { userId: null }, { userId } ] }; // Productos globales + propios
+    // CORREGIDO: Lógica de filtros
+    let baseFilter;
+    
+    if (favoritos === "true") {
+      // Para favoritos: permitir productos globales + propios del usuario
+      baseFilter = { $or: [{ userId: null }, { userId }] };
+    } else if (mis === "true") {
+      // Solo productos del usuario actual
+      baseFilter = { userId };
+    } else {
+      // Solo productos globales (sin propietario)
+      baseFilter = { userId: null };
+    }
 
     console.log('Filtro base aplicado:', JSON.stringify(baseFilter));
 

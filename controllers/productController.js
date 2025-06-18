@@ -45,10 +45,9 @@ const createProduct = async (req, res) => {
   }
 };
 
-// Obtener todos los productos (globales + propios)
+
 const getProducts = async (req, res) => {
   try {
-    // Solo productos globales, no productos de usuarios específicos
     const products = await Product.find({ userId: null });
     res.json(products);
   } catch (error) {

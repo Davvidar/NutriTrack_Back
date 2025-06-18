@@ -108,8 +108,8 @@ const updateProfile = async (req, res) => {
     if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
     const {
-      nombre,           // AGREGADO
-      apellido,         // AGREGADO
+      nombre,
+      apellido,
       peso,
       altura,
       edad,
@@ -119,10 +119,11 @@ const updateProfile = async (req, res) => {
       objetivosNutricionales // opcional si se editan manualmente
     } = req.body;
 
-    // AGREGAR estas líneas para actualizar nombre y apellido
+    console.log('Datos recibidos para actualizar:', req.body);
+
+    // Actualizar campos básicos del perfil
     if (nombre !== undefined) user.nombre = nombre;
     if (apellido !== undefined) user.apellido = apellido;
-    
     if (peso !== undefined) user.peso = peso;
     if (altura !== undefined) user.altura = altura;
     if (edad !== undefined) user.edad = edad;
@@ -130,11 +131,13 @@ const updateProfile = async (req, res) => {
     if (actividad) user.actividad = actividad;
     if (objetivo) user.objetivo = objetivo;
 
+    // Manejo de objetivos nutricionales
     if (objetivosNutricionales) {
       user.objetivosNutricionales = objetivosNutricionales;
+      console.log('Usando objetivos nutricionales explícitos:', objetivosNutricionales);
     } else {
-      // recalcula automáticamente si no se pasa manualmente
-      user.objetivosNutricionales = calcularObjetivosNutricionales({
+ 
+      const nuevosObjetivos = calcularObjetivosNutricionales({
         peso: user.peso,
         altura: user.altura,
         edad: user.edad,
@@ -142,12 +145,21 @@ const updateProfile = async (req, res) => {
         actividad: user.actividad,
         objetivo: user.objetivo
       });
+      user.objetivosNutricionales = nuevosObjetivos;
+      console.log('Objetivos nutricionales recalculados automáticamente:', nuevosObjetivos);
     }
 
+    // Guardar el usuario actualizado
     await user.save();
-    res.json({ message: "Perfil actualizado", user: { ...user.toObject(), password: undefined } });
+  
+    const updatedUser = await User.findById(user._id).select("-password");
+    
+    console.log('Usuario actualizado exitosamente con objetivos:', updatedUser.objetivosNutricionales);
+    res.json({ message: "Perfil actualizado correctamente", user: updatedUser });
+
   } catch (error) {
-    res.status(500).json({ message: "Error al actualizar perfil", error });
+    console.error('Error al actualizar perfil:', error);
+    res.status(500).json({ message: "Error al actualizar perfil", error: error.message });
   }
 };
 
